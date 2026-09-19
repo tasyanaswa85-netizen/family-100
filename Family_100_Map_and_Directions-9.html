@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Family 100 — Map & Directions</title>
+<style>
+:root{
+  --navy:#102a56;--blue:#1769aa;--cyan:#35b7e9;--gold:#ffd447;
+  --red:#e9425d;--green:#20a56b;--bg:#eef5ff;--white:#fff;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:linear-gradient(135deg,#dfeeff,#f9fbff);color:#102a56;min-height:100vh}
+button,input{font:inherit}
+button{cursor:pointer}
+.app{max-width:1250px;margin:auto;padding:18px}
+header{background:linear-gradient(135deg,var(--navy),#174f93);color:white;border-radius:22px;padding:18px 24px;display:flex;align-items:center;justify-content:space-between;gap:15px;box-shadow:0 10px 25px #102a5625}
+.brand{display:flex;align-items:center;gap:14px}.logo{font-size:42px}.brand h1{margin:0;font-size:clamp(24px,4vw,42px)}.brand p{margin:3px 0 0;opacity:.85}
+.pill{background:#ffffff20;padding:9px 13px;border-radius:999px;font-weight:bold}
+.scoreboard{display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:14px;margin:16px 0}
+.score{background:white;border-radius:18px;padding:14px 18px;text-align:center;box-shadow:0 6px 18px #102a5615;border:3px solid transparent}
+.score.active{border-color:var(--gold);transform:translateY(-2px)}
+.score h2{margin:0;font-size:18px}.score .num{font-size:40px;font-weight:900;margin-top:3px}
+.turn{display:flex;flex-direction:column;justify-content:center;align-items:center;background:#fff;border-radius:18px;padding:10px;box-shadow:0 6px 18px #102a5615}
+.turn strong{font-size:20px}.xrow{margin-top:8px;display:flex;gap:8px}.x{width:38px;height:38px;border-radius:10px;background:#edf1f7;color:#c9ced8;font-size:27px;font-weight:900;display:grid;place-items:center}.x.on{background:#ffe1e6;color:var(--red)}
+.game{background:white;border-radius:24px;padding:22px;box-shadow:0 10px 30px #102a5620}
+.qhead{display:flex;align-items:center;justify-content:space-between;gap:10px}.qnum{background:var(--gold);color:#17294a;border-radius:12px;padding:9px 14px;font-weight:900;font-size:20px}.mapicon{font-size:34px}
+.question{font-size:clamp(25px,4vw,42px);font-weight:900;text-align:center;margin:20px 5% 24px;min-height:55px}
+.answers{display:grid;gap:12px;max-width:850px;margin:auto}
+.answer{height:66px;border:0;border-radius:14px;background:linear-gradient(135deg,#15447f,#2369ae);color:white;display:grid;grid-template-columns:65px 1fr 100px;align-items:center;font-weight:900;box-shadow:inset 0 -4px 0 #0d315e,0 5px 10px #102a5618;overflow:hidden}
+.answer .n{font-size:22px;background:#0d315e;height:100%;display:grid;place-items:center}.answer .txt{font-size:clamp(18px,2.3vw,26px);text-align:left;padding-left:18px}.answer .pts{font-size:23px;color:var(--gold);padding-right:18px;text-align:right}
+.answer.hidden .txt,.answer.hidden .pts{visibility:hidden}.answer.revealed{background:linear-gradient(135deg,#117c59,#20a56b)}
+.answer.flip{animation:flip .55s ease}.answer.revealed .pts{color:white}
+@keyframes flip{0%{transform:rotateX(0)}50%{transform:rotateX(90deg)}100%{transform:rotateX(0)}}
+.controls{margin-top:22px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.controls button,.bottom button{border:0;border-radius:12px;padding:13px 10px;font-weight:900;color:white;background:#24639e;box-shadow:0 4px 0 #154675}
+.controls button:active,.bottom button:active{transform:translateY(2px);box-shadow:0 2px 0 #154675}
+button.green{background:var(--green);box-shadow:0 4px 0 #126b48}button.red{background:var(--red);box-shadow:0 4px 0 #a92a40}button.gold{background:#e3a900;color:#17294a;box-shadow:0 4px 0 #9b7200}button.dark{background:#27364d;box-shadow:0 4px 0 #151e2a}
+.inputrow{display:flex;gap:10px;max-width:850px;margin:18px auto 0}.inputrow input{flex:1;border:3px solid #d6e2f2;border-radius:12px;padding:13px 15px;outline:none;font-size:20px}.inputrow input:focus{border-color:var(--cyan)}
+.bottom{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px}.bottom button{min-width:145px}
+.hint{text-align:center;color:#65758d;margin:12px 0 0;font-size:14px}
+.overlay{position:fixed;inset:0;background:#08172dcc;display:none;place-items:center;padding:20px;z-index:5}
+.overlay.show{display:grid}.final{background:white;border-radius:28px;padding:30px;max-width:750px;width:100%;text-align:center;box-shadow:0 20px 60px #0006}.final h2{font-size:42px;margin:0 0 20px}.finalscores{display:grid;grid-template-columns:1fr 1fr;gap:14px}.finalcard{padding:20px;border-radius:18px;background:#eef5ff}.finalcard strong{display:block;font-size:18px}.finalcard span{font-size:46px;font-weight:900}.final p{font-size:20px}.toast{position:fixed;left:50%;bottom:25px;transform:translate(-50%,20px);background:#142a4b;color:#fff;padding:13px 18px;border-radius:999px;opacity:0;pointer-events:none;transition:.25s;z-index:10;font-weight:bold}.toast.show{opacity:1;transform:translate(-50%,0)}
+@media(max-width:720px){.scoreboard{grid-template-columns:1fr 1fr}.turn{grid-column:1/-1;grid-row:1}.score .num{font-size:30px}.controls{grid-template-columns:repeat(2,1fr)}.answer{grid-template-columns:48px 1fr 75px}.answer .pts{font-size:18px;padding-right:10px}.question{margin-left:0;margin-right:0}.inputrow{flex-direction:column}}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <div class="brand"><div class="logo">🗺️</div><div><h1>FAMILY 100</h1><p>Map & Directions • English Speaking Game</p></div></div>
+  <div class="pill">10 Questions</div>
+</header>
+
+<section class="scoreboard">
+  <div class="score" id="teamA"><h2>🔵 TEAM A</h2><div class="num" id="scoreA">0</div></div>
+  <div class="turn"><strong id="turnLabel">Team A's Turn</strong><div class="xrow"><div class="x" id="x1">X</div><div class="x" id="x2">X</div><div class="x" id="x3">X</div></div></div>
+  <div class="score" id="teamB"><h2>🟠 TEAM B</h2><div class="num" id="scoreB">0</div></div>
+</section>
+
+<main class="game">
+  <div class="qhead"><div class="qnum" id="qNum">QUESTION 1 / 10</div><div class="mapicon">📍 🚌 🧭</div></div>
+  <div class="question" id="question"></div>
+  <div class="answers" id="answers"></div>
+
+  <div class="inputrow">
+    <input id="answerInput" placeholder="Type the student's oral answer here..." autocomplete="off">
+    <button class="green" id="checkBtn">Check Answer</button>
+  </div>
+
+  <div class="controls">
+    <button class="green" id="correctBtn">✓ Correct</button>
+    <button class="red" id="wrongBtn">✕ Wrong / X</button>
+    <button class="gold" id="switchBtn">⇄ Switch Team</button>
+    <button class="dark" id="resetXBtn">↻ Reset X</button>
+    <button id="revealBtn">▣ Reveal All</button>
+    <button id="nextBtn">▶ Next Question</button>
+    <button class="dark" id="resetBtn">⟳ Reset Game</button>
+  </div>
+  <div class="hint">Students answer orally. Type a keyword or short answer to check the matching survey answer.</div>
+</main>
+</div>
+
+<div class="overlay" id="finalOverlay">
+  <div class="final">
+    <div style="font-size:58px">🏆🎉</div>
+    <h2>Final Scores</h2>
+    <div class="finalscores">
+      <div class="finalcard"><strong>🔵 TEAM A</strong><span id="finalA">0</span></div>
+      <div class="finalcard"><strong>🟠 TEAM B</strong><span id="finalB">0</span></div>
+    </div>
+    <p id="finalMessage"></p>
+    <button class="gold" onclick="closeFinal()" style="border:0;border-radius:12px;padding:13px 25px;font-weight:900">Back to Game</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const questions=[
+ {q:"Name a place you can find on a map.",a:[
+  ["Hospital",100,["hospital"]],["School",80,["school"]],["Bank",60,["bank"]],["Market",40,["market"]],["Restaurant",20,["restaurant","resto"]]]},
+ {q:"Name a direction people commonly use.",a:[
+  ["Turn left",100,["left","turn left","go left"]],["Turn right",80,["right","turn right","go right"]],["Go straight",60,["straight","go straight","straight ahead"]],["Go back",40,["back","go back","backward"]],["Cross the street",20,["cross","cross the street","cross street"]]]},
+ {q:"Name a place where people usually go to buy things.",a:[
+  ["Market",100,["market"]],["Mall",80,["mall","shopping mall"]],["Supermarket",60,["supermarket","super market"]],["Convenience store",40,["convenience","convenience store","mini market","minimarket"]],["Clothing store",20,["clothing","clothing store","clothes shop","clothes"]]]},
+ {q:"Name something you may see when following directions.",a:[
+  ["Traffic light",100,["traffic light","traffic lights","stoplight","stop light"]],["Street",80,["street","road"]],["Intersection",60,["intersection","crossroads","cross roads"]],["Bridge",40,["bridge"]],["Building",20,["building"]]]},
+ {q:"Name a way to travel from one place to another.",a:[
+  ["Motorcycle",100,["motorcycle","motorbike","motor bike"]],["Car",80,["car","automobile"]],["Bus",60,["bus"]],["Bicycle",40,["bicycle","bike"]],["Walking",20,["walking","walk","on foot"]]]},
+ {q:"Name a word used to describe where a place is located.",a:[
+  ["Near",100,["near","nearby","close"]],["Next to",80,["next to","beside","by"]],["In front of",60,["in front","in front of"]],["Behind",40,["behind","at the back"]],["Opposite",20,["opposite","across from","across the street"]]]},
+ {q:"Name a place where students may go after school.",a:[
+  ["Home",100,["home","house"]],["Library",80,["library"]],["Restaurant",60,["restaurant","resto"]],["Mall",40,["mall","shopping mall"]],["Sports center",20,["sports center","sport center","gym","sports centre"]]]},
+ {q:"Name something you may use to find a place.",a:[
+  ["Map",100,["map"]],["Google Maps",80,["google maps","google map"]],["Street sign",60,["street sign","road sign"]],["GPS",40,["gps","navigation","navigator"]],["Address",20,["address"]]]},
+ {q:"Name a place you might find near a school.",a:[
+  ["Restaurant",100,["restaurant","resto"]],["Library",80,["library"]],["Market",60,["market"]],["Park",40,["park"]],["Bus stop",20,["bus stop","bus station"]]]},
+ {q:"Name something you might see at an intersection.",a:[
+  ["Traffic light",100,["traffic light","traffic lights","stoplight","stop light"]],["Cars",80,["car","cars","vehicle","vehicles"]],["Motorcycles",60,["motorcycle","motorcycles","motorbike","motorbikes"]],["Crosswalk",40,["crosswalk","zebra crossing","pedestrian crossing"]],["Street signs",20,["street sign","street signs","road sign","road signs"]]]}
+];
+
+let qIndex=0, scores=[0,0], active=0, mistakes=0, revealed=new Set();
+const $=id=>document.getElementById(id);
+function norm(s){return s.toLowerCase().replace(/[^a-z0-9\s]/g," ").replace(/\s+/g," ").trim()}
+function render(){
+ const d=questions[qIndex]; $("qNum").textContent=`QUESTION ${qIndex+1} / ${questions.length}`; $("question").textContent=d.q;
+ $("answers").innerHTML=d.a.map((x,i)=>`<button class="answer ${revealed.has(i)?"revealed":"hidden"}" id="ans${i}" onclick="reveal(${i})"><span class="n">${i+1}</span><span class="txt">${x[0]}</span><span class="pts">${x[1]}</span></button>`).join("");
+ $("scoreA").textContent=scores[0];$("scoreB").textContent=scores[1];
+ $("turnLabel").textContent=`Team ${active?"B":"A"}'s Turn`;
+ $("teamA").classList.toggle("active",active===0);$("teamB").classList.toggle("active",active===1);
+ for(let i=1;i<=3;i++) $("x"+i).classList.toggle("on",i<=mistakes);
+ $("answerInput").value=""; $("answerInput").focus();
+}
+function reveal(i,addScore=true){
+ if(revealed.has(i)) return;
+ revealed.add(i); const el=$("ans"+i); el.classList.remove("hidden");el.classList.add("flip","revealed");
+ if(addScore){scores[active]+=questions[qIndex].a[i][1]; beep("correct");}
+ renderScoresOnly();
+}
+function renderScoresOnly(){ $("scoreA").textContent=scores[0];$("scoreB").textContent=scores[1]; }
+function checkAnswer(){
+ const val=norm($("answerInput").value); if(!val){toast("Type the student's answer first.");return}
+ const match=questions[qIndex].a.findIndex(x=>x[2].some(k=>val===norm(k)||val.includes(norm(k))||norm(k).includes(val)));
+ if(match>=0 && !revealed.has(match)){reveal(match);toast(`Correct match: ${questions[qIndex].a[match][0]} (+${questions[qIndex].a[match][1]})`)}
+ else if(match>=0 && revealed.has(match)){toast("That answer has already been revealed.");beep("wrong")}
+ else{wrong();toast("No matching survey answer. Give the team an X.");}
+}
+function correct(){const hidden=[0,1,2,3,4].filter(i=>!revealed.has(i));if(hidden.length===1) reveal(hidden[0]); else toast("Use Check Answer or click the matching answer box.");}
+function wrong(){
+ mistakes++;beep("wrong");render();
+ if(mistakes>=3){toast(`Three Xs! Switch to Team ${active?"A":"B"}.`);setTimeout(()=>switchTeam(),650)}
+}
+function switchTeam(){active=1-active;mistakes=0;render();toast(`Now Team ${active?"B":"A"}'s turn.`)}
+function resetX(){mistakes=0;render();toast("X indicators reset.")}
+function revealAll(){for(let i=0;i<5;i++) revealed.add(i); render();toast("All answers revealed.");}
+function nextQuestion(){
+ if(qIndex===questions.length-1){showFinal();return}
+ qIndex++;revealed=new Set();mistakes=0;render();
+}
+function resetGame(){if(!confirm("Reset the whole game and both scores?"))return;qIndex=0;scores=[0,0];active=0;mistakes=0;revealed=new Set();closeFinal();render();toast("Game reset.")}
+function showFinal(){$("finalA").textContent=scores[0];$("finalB").textContent=scores[1];$("finalMessage").textContent=scores[0]===scores[1]?"It’s a tie! Great teamwork!":scores[0]>scores[1]?"Team A has the higher score!":"Team B has the higher score!";$("finalOverlay").classList.add("show");beep("final")}
+function closeFinal(){$("finalOverlay").classList.remove("show")}
+function toast(t){const el=$("toast");el.textContent=t;el.classList.add("show");clearTimeout(window.tt);window.tt=setTimeout(()=>el.classList.remove("show"),1800)}
+let audioCtx;
+function beep(type){
+ try{
+  audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();
+  const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.connect(g);g.connect(audioCtx.destination);
+  const now=audioCtx.currentTime;
+  if(type==="correct"){o.frequency.setValueAtTime(520,now);o.frequency.exponentialRampToValueAtTime(760,now+.16)}
+  else if(type==="wrong"){o.frequency.setValueAtTime(180,now);o.frequency.exponentialRampToValueAtTime(90,now+.25)}
+  else {o.frequency.setValueAtTime(420,now);o.frequency.exponentialRampToValueAtTime(850,now+.5)}
+  g.gain.setValueAtTime(.0001,now);g.gain.exponentialRampToValueAtTime(.16,now+.02);g.gain.exponentialRampToValueAtTime(.0001,now+(type==="final"? .7:.3));o.start(now);o.stop(now+.75);
+ }catch(e){}
+}
+$("checkBtn").onclick=checkAnswer;$("correctBtn").onclick=correct;$("wrongBtn").onclick=wrong;$("switchBtn").onclick=switchTeam;$("resetXBtn").onclick=resetX;$("revealBtn").onclick=revealAll;$("nextBtn").onclick=nextQuestion;$("resetBtn").onclick=resetGame;
+$("answerInput").addEventListener("keydown",e=>{if(e.key==="Enter")checkAnswer()});
+render();
+</script>
+</body>
+</html>
